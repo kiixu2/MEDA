@@ -1,9 +1,8 @@
-
 from fastapi import FastAPI
 from app.database import engine, Base
 
-# استيراد الموديلات (مهم: قبل create_all)
-from app.models import user
+# استيراد كل الموديلات (مهم قبل create_all)
+from app import models
 
 # إنشاء الجداول في قاعدة البيانات
 Base.metadata.create_all(bind=engine)
