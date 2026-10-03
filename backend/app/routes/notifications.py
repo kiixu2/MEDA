@@ -3,15 +3,21 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app.models.notification import Notification
+from app.models.user import User
 from app.schemas.notification import (
     NotificationCreate, NotificationResponse
 )
+from app.utils.security import get_current_user
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 
 @router.post("", response_model=NotificationResponse, status_code=201)
-def create_notification(data: NotificationCreate, db: Session = Depends(get_db)):
+def create_notification(
+    data: NotificationCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     new_notif = Notification(**data.model_dump())
     db.add(new_notif)
     db.commit()
@@ -20,22 +26,29 @@ def create_notification(data: NotificationCreate, db: Session = Depends(get_db))
 
 
 @router.get("", response_model=List[NotificationResponse])
-def get_all_notifications(db: Session = Depends(get_db)):
-    return db.query(Notification).all()
-
-
-@router.get("/user/{user_id}", response_model=List[NotificationResponse])
-def get_user_notifications(user_id: int, db: Session = Depends(get_db)):
-    return db.query(Notification).filter(Notification.user_id == user_id).all()
+def get_my_notifications(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # المستخدم يشوف إشعاراته فقط
+    return db.query(Notification).filter(
+        Notification.user_id == current_user.user_id
+    ).all()
 
 
 @router.post("/{notification_id}/read", response_model=NotificationResponse)
-def mark_as_read(notification_id: int, db: Session = Depends(get_db)):
+def mark_as_read(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     notif = db.query(Notification).filter(
-        Notification.notification_id == notification_id
+        Notification.notification_id == notification_id,
+        Notification.user_id == current_user.user_id
     ).first()
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found")
+    
     notif.is_read = True
     notif.status = "Read"
     db.commit()
@@ -44,12 +57,18 @@ def mark_as_read(notification_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{notification_id}", status_code=204)
-def delete_notification(notification_id: int, db: Session = Depends(get_db)):
+def delete_notification(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     notif = db.query(Notification).filter(
-        Notification.notification_id == notification_id
+        Notification.notification_id == notification_id,
+        Notification.user_id == current_user.user_id
     ).first()
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found")
+    
     db.delete(notif)
     db.commit()
     return None
