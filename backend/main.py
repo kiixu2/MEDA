@@ -5,7 +5,10 @@ from app import models
 from app.routes import (
     auth, medications, schedules, doses, notifications,
     guardianships, patient_profiles, doctors,
-    medical_records, allergies, stock_transactions
+    medical_records, allergies, stock_transactions,
+    medical_supervisors, consent_records, audit_logs,
+    ai_extraction_logs, ai_consultations,
+    medication_catalog, patient_medications
 )
 
 Base.metadata.create_all(bind=engine)
@@ -33,6 +36,13 @@ app.include_router(doctors.router)
 app.include_router(medical_records.router)
 app.include_router(allergies.router)
 app.include_router(stock_transactions.router)
+app.include_router(medical_supervisors.router)
+app.include_router(consent_records.router)
+app.include_router(audit_logs.router)
+app.include_router(ai_extraction_logs.router)
+app.include_router(ai_consultations.router)
+app.include_router(medication_catalog.router)
+app.include_router(patient_medications.router)
 
 
 @app.get("/")
