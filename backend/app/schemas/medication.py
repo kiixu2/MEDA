@@ -12,7 +12,7 @@ class MedicationBase(BaseModel):
 
 
 class MedicationCreate(MedicationBase):
-    patient_id: int
+    pass  # ← patient_id ما عاد مطلوب، ناخذه من الـToken أو query param
 
 
 class MedicationUpdate(BaseModel):
