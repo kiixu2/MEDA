@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app import models
-from app.routes import auth
+from app.routes import auth, medications
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,6 +19,7 @@ app.add_middleware(
 
 # Routes
 app.include_router(auth.router)
+app.include_router(medications.router)
 
 
 @app.get("/")
