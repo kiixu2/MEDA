@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app import models
-from app.routes import auth, medications
+from app.routes import auth, medications, schedules, doses, notifications
 
 Base.metadata.create_all(bind=engine)
 
@@ -20,7 +20,9 @@ app.add_middleware(
 # Routes
 app.include_router(auth.router)
 app.include_router(medications.router)
-
+app.include_router(schedules.router)
+app.include_router(doses.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 def home():
