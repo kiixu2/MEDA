@@ -10,13 +10,12 @@ class MedicationCatalog(Base):
     medication_id = Column(Integer, primary_key=True, index=True)
     generic_name = Column(String(200), nullable=False, index=True)
     brand_name = Column(String(200), nullable=True)
-    dosage_form = Column(String(100), nullable=True)
+    dosage_form = Column(String(100), nullable=False)
     route = Column(String(100), nullable=True)
-    strength_value = Column(Numeric(12, 3), nullable=True)
-    strength_unit = Column(String(50), nullable=True)
-    stock_unit = Column(String(50), nullable=False)
+    concentration = Column(Numeric(12, 3), nullable=True)
+    concentration_unit = Column(String(30), nullable=True)
+    quantity_unit = Column(String(30), nullable=False)
     is_active = Column(Boolean, default=True)
     created_at_utc = Column(DateTime(timezone=True), server_default=func.now())
 
     patient_medications = relationship("PatientMedication", backref="catalog_entry")
-    

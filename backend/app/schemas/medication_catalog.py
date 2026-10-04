@@ -7,11 +7,11 @@ from decimal import Decimal
 class MedicationCatalogBase(BaseModel):
     generic_name: str
     brand_name: Optional[str] = None
-    dosage_form: Optional[str] = None
+    dosage_form: str
     route: Optional[str] = None
-    strength_value: Optional[Decimal] = None
-    strength_unit: Optional[str] = None
-    stock_unit: str
+    concentration: Optional[Decimal] = None
+    concentration_unit: Optional[str] = None
+    quantity_unit: str
 
 
 class MedicationCatalogCreate(MedicationCatalogBase):

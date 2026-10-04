@@ -6,7 +6,9 @@ from app.models.dose_log import DoseLog
 from app.models.notification import Notification
 from app.models.patient_profile import PatientProfile
 from app.models.doctor import Doctor
+from app.models.nurse import Nurse
 from app.models.medical_record import PatientMedicalRecord
+from app.models.medical_record_note import MedicalRecordNote
 from app.models.allergy import PatientAllergy
 from app.models.stock_transaction import MedicationStockTransaction
 from app.models.medical_supervisor import MedicalSupervisor
@@ -19,8 +21,9 @@ from app.models.patient_medication import PatientMedication
 
 __all__ = [
     "User", "Guardianship", "Medication", "MedicationSchedule",
-    "DoseLog", "Notification", "PatientProfile", "Doctor",
-    "PatientMedicalRecord", "PatientAllergy", "MedicationStockTransaction",
+    "DoseLog", "Notification", "PatientProfile", "Doctor", "Nurse",
+    "PatientMedicalRecord", "MedicalRecordNote",
+    "PatientAllergy", "MedicationStockTransaction",
     "MedicalSupervisor", "ConsentRecord", "AuditLog",
     "AIExtractionLog", "AIConsultation",
     "MedicationCatalog", "PatientMedication",

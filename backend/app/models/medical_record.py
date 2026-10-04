@@ -8,17 +8,32 @@ class PatientMedicalRecord(Base):
     __tablename__ = "patient_medical_records"
 
     record_id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, index=True)
-    condition_name = Column(String(200), nullable=False)
-    condition_type = Column(String(50), nullable=True)
+    patient_id = Column(
+        Integer,
+        ForeignKey("patient_profiles.patient_id"),
+        nullable=False,
+        index=True
+    )
+    doctor_user_id = Column(
+        Integer,
+        ForeignKey("doctors.user_id"),
+        nullable=False
+    )
+    created_by_user_id = Column(
+        Integer,
+        ForeignKey("users.user_id"),
+        nullable=False
+    )
+    condition = Column(String(200), nullable=False)
+    patient_status = Column(String(100), nullable=False)
+    severity = Column(String(20), nullable=True)  # Mild | Moderate | Severe
     diagnosed_date = Column(Date, nullable=True)
-    current_status = Column(String(30), default="Active")
-    severity_level = Column(String(20), nullable=True)
-    symptoms = Column(String(1000), nullable=True)
-    treatment_plan = Column(String(1000), nullable=True)
-    doctor_name = Column(String(100), nullable=True)
-    notes = Column(String(1000), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    symptoms = Column(String(2000), nullable=True)
+    treatment_plan = Column(String(2000), nullable=True)
+    attachment_storage_key = Column(String(500), nullable=True)
+    created_at_utc = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at_utc = Column(DateTime(timezone=True), onupdate=func.now())
 
-    patient = relationship("User", backref="medical_records")
+    patient = relationship("PatientProfile", backref="medical_records")
+    doctor = relationship("Doctor", backref="medical_records")
+    created_by = relationship("User", backref="created_records")

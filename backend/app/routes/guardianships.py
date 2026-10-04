@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 from app.database import get_db
 from app.models.guardianship import Guardianship
 from app.models.user import User
@@ -18,37 +19,24 @@ def create_guardianship(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # نتأكد إن المريض موجود
-    dependent = db.query(User).filter(User.user_id == data.dependent_id).first()
-    if not dependent:
-        raise HTTPException(status_code=404, detail="Dependent user not found")
-    
-    # منع الوصاية الذاتية
-    if data.dependent_id == current_user.user_id:
-        raise HTTPException(
-            status_code=400,
-            detail="You can't be guardian of yourself"
-        )
-    
-    # نتأكد ما فيه guardianship موجود
+    if data.dependent_patient_id == current_user.user_id:
+        raise HTTPException(status_code=400, detail="Can't be guardian of yourself")
+
     existing = db.query(Guardianship).filter(
-        Guardianship.guardian_id == current_user.user_id,
-        Guardianship.dependent_id == data.dependent_id
+        Guardianship.guardian_user_id == current_user.user_id,
+        Guardianship.dependent_patient_id == data.dependent_patient_id
     ).first()
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Guardianship already exists"
-        )
-    
+        raise HTTPException(status_code=400, detail="Guardianship already exists")
+
     new_g = Guardianship(
-        guardian_id=current_user.user_id,
-        dependent_id=data.dependent_id,
+        guardian_user_id=current_user.user_id,
+        dependent_patient_id=data.dependent_patient_id,
         relationship_type=data.relationship_type,
         can_view_history=data.can_view_history,
         can_manage_medications=data.can_manage_medications,
-        can_receive_notifications=data.can_receive_notifications,
-        status="Active"
+        status="Active",
+        granted_at_utc=datetime.utcnow()
     )
     db.add(new_g)
     db.commit()
@@ -61,9 +49,8 @@ def get_my_patients(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """كل المرضى اللي أنا وصي عليهم"""
     return db.query(Guardianship).filter(
-        Guardianship.guardian_id == current_user.user_id,
+        Guardianship.guardian_user_id == current_user.user_id,
         Guardianship.status == "Active"
     ).all()
 
@@ -73,23 +60,22 @@ def get_my_guardians(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """كل الأوصياء اللي يتابعوني"""
     return db.query(Guardianship).filter(
-        Guardianship.dependent_id == current_user.user_id,
+        Guardianship.dependent_patient_id == current_user.user_id,
         Guardianship.status == "Active"
     ).all()
 
 
-@router.put("/{dependent_id}", response_model=GuardianshipResponse)
+@router.put("/{guardianship_id}", response_model=GuardianshipResponse)
 def update_guardianship(
-    dependent_id: int,
+    guardianship_id: int,
     data: GuardianshipUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     g = db.query(Guardianship).filter(
-        Guardianship.guardian_id == current_user.user_id,
-        Guardianship.dependent_id == dependent_id
+        Guardianship.guardianship_id == guardianship_id,
+        Guardianship.guardian_user_id == current_user.user_id
     ).first()
     if not g:
         raise HTTPException(status_code=404, detail="Guardianship not found")
@@ -102,21 +88,20 @@ def update_guardianship(
     return g
 
 
-@router.delete("/{dependent_id}", status_code=204)
+@router.delete("/{guardianship_id}", status_code=204)
 def revoke_guardianship(
-    dependent_id: int,
+    guardianship_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     g = db.query(Guardianship).filter(
-        Guardianship.guardian_id == current_user.user_id,
-        Guardianship.dependent_id == dependent_id
+        Guardianship.guardianship_id == guardianship_id,
+        Guardianship.guardian_user_id == current_user.user_id
     ).first()
     if not g:
         raise HTTPException(status_code=404, detail="Guardianship not found")
-    
+
     g.status = "Revoked"
-    from datetime import datetime
-    g.revoked_at = datetime.utcnow()
+    g.ended_at_utc = datetime.utcnow()
     db.commit()
     return None

@@ -18,7 +18,10 @@ def create_allergy(
     db: Session = Depends(get_db)
 ):
     require_patient_access(current_user, data.patient_id, "view_history", db)
-    allergy = PatientAllergy(**data.model_dump())
+    allergy = PatientAllergy(
+        added_by_user_id=current_user.user_id,
+        **data.model_dump()
+    )
     db.add(allergy)
     db.commit()
     db.refresh(allergy)

@@ -18,7 +18,10 @@ def create_record(
     db: Session = Depends(get_db)
 ):
     require_patient_access(current_user, data.patient_id, "view_history", db)
-    record = PatientMedicalRecord(**data.model_dump())
+    record = PatientMedicalRecord(
+        created_by_user_id=current_user.user_id,
+        **data.model_dump()
+    )
     db.add(record)
     db.commit()
     db.refresh(record)
