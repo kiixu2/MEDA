@@ -9,9 +9,10 @@ from app.routes import (
     medical_supervisors, consent_records, audit_logs,
     ai_extraction_logs, ai_consultations,
     medication_catalog, patient_medications,
-    nurses, medical_record_notes
+    nurses, medical_record_notes, appointments
 )
 
+# إنشاء الجداول
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="MEDA API", version="2.0.0")
@@ -46,11 +47,12 @@ app.include_router(ai_extraction_logs.router)
 app.include_router(ai_consultations.router)
 app.include_router(medication_catalog.router)
 app.include_router(patient_medications.router)
+app.include_router(appointments.router)
 
 
 @app.get("/")
 def home():
-    return {"message": "Welcome to MEDA v2"}
+    return {"message": "Welcome to MEDA API v2"}
 
 
 @app.get("/health")

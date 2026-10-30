@@ -28,3 +28,5 @@ __all__ = [
     "AIExtractionLog", "AIConsultation",
     "MedicationCatalog", "PatientMedication",
 ]
+from app.models.appointment import Appointment
+# وأضيفي "Appointment" داخل قائمة __all__

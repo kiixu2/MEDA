@@ -13,11 +13,19 @@ class PatientProfile(Base):
         primary_key=True,
         nullable=False
     )
+    
     blood_type = Column(String(5), nullable=True)
     emergency_contact_name = Column(String(150), nullable=True)
     emergency_contact_phone = Column(String(30), nullable=True)
     time_zone_id = Column(String(128), default="UTC")
+    
+    # 💡 السطر الجديد: ربط المريض بالممرض المسؤول عنه
+    assigned_nurse_id = Column(Integer, ForeignKey("nurses.user_id"), nullable=True)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", backref="patient_profile", uselist=False)
+    
+    # 💡 علاقة عشان نقدر نوصل لبيانات الممرض بسهولة
+    assigned_nurse = relationship("Nurse", backref="assigned_patients")

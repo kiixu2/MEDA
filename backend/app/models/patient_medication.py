@@ -3,12 +3,11 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
-
 class PatientMedication(Base):
     __tablename__ = "patient_medications"
 
     patient_medication_id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patient_profiles.patient_id"), nullable=False, index=True)
+    patient_id = Column(Integer, ForeignKey("patient_profiles.patient_id"), nullable=False)
     medication_id = Column(Integer, ForeignKey("medication_catalog.medication_id"), nullable=False)
     prescribed_by_doctor_id = Column(Integer, ForeignKey("doctors.user_id"), nullable=True)
     prescribed_quantity = Column(Numeric(12, 3), nullable=True)
@@ -24,5 +23,7 @@ class PatientMedication(Base):
 
     patient = relationship("PatientProfile", backref="patient_medications")
     prescriber = relationship("Doctor", backref="prescribed_medications")
-    schedules = relationship("MedicationSchedule", backref="patient_medication")
     
+    # 👇 العلاقة هنا صارت سليمة ومربوطة بالكتالوج
+    medication = relationship("MedicationCatalog", back_populates="patient_medications")
+    schedules = relationship("MedicationSchedule", back_populates="patient_medication")

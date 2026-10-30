@@ -14,7 +14,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role: str = "Patient"
+    role: str = "Patient"  # المسموح: Patient, Caregiver, Doctor, Nurse, Admin
 
 
 class UserLogin(BaseModel):

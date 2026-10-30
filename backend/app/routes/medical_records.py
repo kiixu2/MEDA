@@ -5,7 +5,7 @@ from app.database import get_db
 from app.models.medical_record import PatientMedicalRecord
 from app.models.user import User
 from app.schemas.medical_record import MedicalRecordCreate, MedicalRecordResponse
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user, require_roles
 from app.utils.permissions import require_patient_access
 
 router = APIRouter(prefix="/medical-records", tags=["Medical Records"])
@@ -14,10 +14,10 @@ router = APIRouter(prefix="/medical-records", tags=["Medical Records"])
 @router.post("", response_model=MedicalRecordResponse, status_code=201)
 def create_record(
     data: MedicalRecordCreate,
-    current_user: User = Depends(get_current_user),
+    # 🛡️ الحماية: فقط الطبيب (Doctor) يمكنه إنشاء سجل طبي
+    current_user: User = Depends(require_roles(["Doctor"])),
     db: Session = Depends(get_db)
 ):
-    require_patient_access(current_user, data.patient_id, "view_history", db)
     record = PatientMedicalRecord(
         created_by_user_id=current_user.user_id,
         **data.model_dump()
@@ -44,7 +44,10 @@ def get_patient_records(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    require_patient_access(current_user, patient_id, "view_history", db)
+    # الأطباء يسمح لهم بالرؤية، والوصي يسمح له إذا عنده صلاحية
+    if current_user.role != "Doctor":
+        require_patient_access(current_user, patient_id, "view_history", db)
+        
     return db.query(PatientMedicalRecord).filter(
         PatientMedicalRecord.patient_id == patient_id
     ).all()
@@ -61,6 +64,7 @@ def delete_record(
     ).first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
+        
     require_patient_access(current_user, record.patient_id, "view_history", db)
     db.delete(record)
     db.commit()
