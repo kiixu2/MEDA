@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime, date
+from datetime import datetime
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
@@ -21,6 +21,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.phone_number == user_data.phone_number).first():
         raise HTTPException(status_code=400, detail="Phone already registered")
 
+    # 🛡️ التعديل الأمني 1: نجبر أي مستخدم يسجل من التطبيق يكون "Patient" فقط
+    # الأطباء والممرضين يتم إنشاؤهم عبر السكريبت أو لوحة التحكم
     new_user = User(
         full_name=user_data.full_name,
         username=user_data.username,
@@ -29,8 +31,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         date_of_birth=user_data.date_of_birth,
         gender=user_data.gender,
         password_hash=hash_password(user_data.password),
-        role=user_data.role,
-        last_login_at_utc=datetime.utcnow(),
+        role="Patient", # 👈 تم التعديل هنا
+        # 🛡️ التعديل الأمني 2: إزالة last_login_at_utc من هنا لأنه لم يقم بتسجيل الدخول بعد
     )
     db.add(new_user)
     db.commit()
@@ -46,6 +48,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account disabled")
 
+    # هنا صحيح نحدث وقت الدخول
     user.last_login_at_utc = datetime.utcnow()
     db.commit()
 

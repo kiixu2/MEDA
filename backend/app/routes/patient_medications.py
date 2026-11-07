@@ -16,11 +16,22 @@ def create_patient_medication(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # 💡 التعديل هنا: نسمح للطبيب أو الممرض بالإضافة
+    # نسمح للطبيب أو الممرض بالإضافة، أو الوصي اللي عنده صلاحية
     if current_user.role not in ["Doctor", "Nurse"]:
         require_patient_access(current_user, data.patient_id, "manage_medications", db)
         
-    pm = PatientMedication(**data.model_dump())
+    pm_data = data.model_dump()
+    
+    # 🛡️ التعديل الأمني: نأخذ رقم الطبيب من التوكن، ولا نثق باللي يرسله المستخدم
+    provided_doctor_id = pm_data.pop("prescribed_by_doctor_id", None)
+    
+    pm = PatientMedication(**pm_data)
+    
+    if current_user.role == "Doctor":
+        pm.prescribed_by_doctor_id = current_user.user_id # الطبيب يوصف لنفسه فقط
+    else:
+        pm.prescribed_by_doctor_id = provided_doctor_id # الممرض أو الوصي ممكن يحددون الطبيب
+        
     db.add(pm)
     db.commit()
     db.refresh(pm)

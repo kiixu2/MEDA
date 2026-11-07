@@ -7,7 +7,7 @@ from app.models.user import User
 from app.schemas.notification import (
     NotificationCreate, NotificationResponse
 )
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user, require_roles
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -15,7 +15,8 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 @router.post("", response_model=NotificationResponse, status_code=201)
 def create_notification(
     data: NotificationCreate,
-    current_user: User = Depends(get_current_user),
+    # 🛡️ التعديل الأمني: فقط الطبيب والممرض والأدمن يمكنهم إنشاء إشعار لمستخدم
+    current_user: User = Depends(require_roles(["Admin", "Doctor", "Nurse"])),
     db: Session = Depends(get_db)
 ):
     new_notif = Notification(**data.model_dump())
@@ -30,7 +31,7 @@ def get_my_notifications(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # المستخدم يشوف إشعاراته فقط
+    # المريض أو أي مستخدم يشوف إشعاراته فقط
     return db.query(Notification).filter(
         Notification.user_id == current_user.user_id
     ).all()

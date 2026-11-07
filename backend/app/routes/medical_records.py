@@ -14,13 +14,19 @@ router = APIRouter(prefix="/medical-records", tags=["Medical Records"])
 @router.post("", response_model=MedicalRecordResponse, status_code=201)
 def create_record(
     data: MedicalRecordCreate,
-    # 🛡️ الحماية: فقط الطبيب (Doctor) يمكنه إنشاء سجل طبي
-    current_user: User = Depends(require_roles(["Doctor"])),
+    # 🛡️ الحماية: الطبيب والممرض فقط يمكنهم إنشاء سجل طبي
+    current_user: User = Depends(require_roles(["Doctor", "Nurse"])),
     db: Session = Depends(get_db)
 ):
+    # 💡 التعديل الأمني: نأخذ الـ doctor_user_id من التوكن، ونمسحه لو كان موجود في البيانات المرسلة
+    record_data = data.model_dump()
+    record_data.pop("doctor_user_id", None) # نمسحه لو جاي من المستخدم
+    record_data.pop("created_by_user_id", None) # نمسحه لو جاي من المستخدم
+    
     record = PatientMedicalRecord(
-        created_by_user_id=current_user.user_id,
-        **data.model_dump()
+        **record_data,
+        doctor_user_id=current_user.user_id, # نأخذه من التوكن (آمن)
+        created_by_user_id=current_user.user_id # نأخذه من التوكن (آمن)
     )
     db.add(record)
     db.commit()
@@ -44,8 +50,8 @@ def get_patient_records(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # الأطباء يسمح لهم بالرؤية، والوصي يسمح له إذا عنده صلاحية
-    if current_user.role != "Doctor":
+    # الأطباء والممرضين يسمح لهم بالرؤية، والوصي يسمح له إذا عنده صلاحية
+    if current_user.role not in ["Doctor", "Nurse"]:
         require_patient_access(current_user, patient_id, "view_history", db)
         
     return db.query(PatientMedicalRecord).filter(
@@ -56,7 +62,8 @@ def get_patient_records(
 @router.delete("/{record_id}", status_code=204)
 def delete_record(
     record_id: int,
-    current_user: User = Depends(get_current_user),
+    # 🛡️ الحماية: الطبيب فقط هو من يحق له الحذف، وليس الوصي أو المريض
+    current_user: User = Depends(require_roles(["Doctor"])),
     db: Session = Depends(get_db)
 ):
     record = db.query(PatientMedicalRecord).filter(
@@ -64,8 +71,14 @@ def delete_record(
     ).first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
+    
+    # 💡 التعديل الأمني: الطبيب لا يمكنه حذف إلا السجل الذي أنشأه هو
+    if record.created_by_user_id != current_user.user_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="You can only delete medical records you created"
+        )
         
-    require_patient_access(current_user, record.patient_id, "view_history", db)
     db.delete(record)
     db.commit()
-    return None
+    return Non

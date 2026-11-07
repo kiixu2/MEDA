@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>MEDA Frontend</title>
+</head>
+<body>
+    <h2>تسجيل الدخول (MEDA)</h2>
+    
+    <!-- 1. تسجيل الدخول -->
+    <input type="email" id="email" placeholder="الإيميل" value="doctor@test.com">
+    <input type="password" id="password" placeholder="الباسورد" value="password123">
+    <button onclick="login()">دخول</button>
+
+    <hr>
+
+    <!-- 2. جلب البيانات بعد الدخول -->
+    <h3>أدويتي (API Test)</h3>
+    <button onclick="getMedications()">جلب الأدوية</button>
+    <pre id="result"></pre>
+
+    <script>
+        // 💡 إذا كنتِ بتربطين من جهاز ثاني، غيري 127.0.0.1 إلى الـ IP حقك (مثلاً 192.168.1.15)
+        const API_URL = "http://127.0.0.1:8000"; 
+
+        // دالة تسجيل الدخول
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // نحفظ التوكن عشان نستخدمه في الطلبات الجاية
+                localStorage.setItem('token', data.access_token);
+                alert('تم تسجيل الدخول بنجاح!');
+            } else {
+                alert('خطأ في تسجيل الدخول');
+            }
+        }
+
+        // دالة جلب الأدوية (محمية بالتوكن)
+        async function getMedications() {
+            const token = localStorage.getItem('token');
+            if (!token) return alert('سجلي دخول أول!');
+
+            // جلب الأدوية للمريض رقم 1 (أو نغيرها حسب الحاجة)
+            const response = await fetch(`${API_URL}/medications`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`, // هنا نرسل التوكن
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const resultElement = document.getElementById('result');
+            
+            if (response.ok) {
+                const data = await response.json();
+                resultElement.innerText = JSON.stringify(data, null, 2);
+            } else {
+                resultElement.innerText = "خطأ في الجلب (تأكدي من الصلاحيات)";
+            }
+        }
+    </script>
+</body>
+</html>
