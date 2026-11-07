@@ -7,7 +7,7 @@ from decimal import Decimal
 class PatientMedicationBase(BaseModel):
     patient_id: int
     medication_id: int
-    prescribed_by_doctor_id: Optional[int] = None
+    # 🛡️ تم إزالة prescribed_by_doctor_id من هنا عشان منع الانتحال
     prescribed_quantity: Optional[Decimal] = None
     quantity_on_hand: Optional[Decimal] = 0
     low_stock_threshold: Optional[Decimal] = 0
@@ -24,6 +24,7 @@ class PatientMedicationCreate(PatientMedicationBase):
 
 class PatientMedicationResponse(PatientMedicationBase):
     patient_medication_id: int
+    prescribed_by_doctor_id: Optional[int] = None # 👈 يظهر هنا فقط للعرض
     created_at_utc: datetime
 
     class Config:

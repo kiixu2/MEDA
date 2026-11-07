@@ -15,7 +15,7 @@ class MedicalRecordBase(BaseModel):
 
 class MedicalRecordCreate(MedicalRecordBase):
     patient_id: int
-    doctor_user_id: int
+    # 🛡️ تم إزالة doctor_user_id لأنه يُؤخذ من التوكن تلقائياً لضمان الأمان
 
 
 class MedicalRecordResponse(MedicalRecordBase):
