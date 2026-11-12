@@ -1,21 +1,25 @@
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# مسار قاعدة البيانات (SQLite - ملف محلي)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./meda.db"
+from app.config import DATABASE_URL
+
+_is_sqlite = DATABASE_URL.startswith("sqlite")
 
 # إنشاء الاتصال بقاعدة البيانات
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if _is_sqlite else {},
 )
 
-# 🛡️ التعديل الأمني: تفعيل حماية العلاقات (Foreign Keys) في SQLite
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+
+# 🛡️ تفعيل حماية العلاقات (Foreign Keys) في SQLite
+if _is_sqlite:
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
 
 # جلسة التعامل مع قاعدة البيانات
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

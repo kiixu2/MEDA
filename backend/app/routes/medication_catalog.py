@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.database import get_db
 from app.models.medication_catalog import MedicationCatalog
 from app.models.user import User
 from app.schemas.medication_catalog import MedicationCatalogCreate, MedicationCatalogResponse
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user, require_roles
 
 router = APIRouter(prefix="/medication-catalog", tags=["Medication Catalog"])
 
@@ -13,7 +13,8 @@ router = APIRouter(prefix="/medication-catalog", tags=["Medication Catalog"])
 @router.post("", response_model=MedicationCatalogResponse, status_code=201)
 def create_catalog_entry(
     data: MedicationCatalogCreate,
-    current_user: User = Depends(get_current_user),
+    # 🛡️ الكتالوج مرجع طبي: الأدمن والأطباء فقط يضيفون إليه
+    current_user: User = Depends(require_roles(["Admin", "Doctor"])),
     db: Session = Depends(get_db)
 ):
     entry = MedicationCatalog(**data.model_dump())
@@ -25,7 +26,7 @@ def create_catalog_entry(
 
 @router.get("", response_model=List[MedicationCatalogResponse])
 def get_catalog(
-    search: str = None,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

@@ -3,15 +3,11 @@ from typing import Optional
 from datetime import datetime
 
 
-class DoseLogBase(BaseModel):
+class DoseLogCreate(BaseModel):
+    """الحالة تبدأ دائماً Pending - لا تُقبل من العميل."""
     schedule_id: int
     scheduled_datetime: datetime
-    status: Optional[str] = "Pending"
     notes: Optional[str] = None
-
-
-class DoseLogCreate(DoseLogBase):
-    pass
 
 
 class DoseLogUpdate(BaseModel):
@@ -20,8 +16,12 @@ class DoseLogUpdate(BaseModel):
     notes: Optional[str] = None
 
 
-class DoseLogResponse(DoseLogBase):
+class DoseLogResponse(BaseModel):
     log_id: int
+    schedule_id: int
+    scheduled_datetime: datetime
+    status: str
+    notes: Optional[str] = None
     action_timestamp: Optional[datetime] = None
     created_at: datetime
 

@@ -1,12 +1,16 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+
 from app.database import get_db
 from app.models.allergy import PatientAllergy
 from app.models.user import User
 from app.schemas.allergy import AllergyCreate, AllergyResponse
+from app.utils.permissions import (
+    require_patient_access, get_patient_profile_or_404,
+    VIEW_HISTORY, MANAGE_MEDICATIONS
+)
 from app.utils.security import get_current_user
-from app.utils.permissions import require_patient_access
 
 router = APIRouter(prefix="/allergies", tags=["Allergies"])
 
@@ -17,7 +21,9 @@ def create_allergy(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    require_patient_access(current_user, data.patient_id, "view_history", db)
+    get_patient_profile_or_404(db, data.patient_id)
+    # الكتابة تحتاج صلاحية الإدارة (وليس القراءة فقط)
+    require_patient_access(current_user, data.patient_id, MANAGE_MEDICATIONS, db)
     allergy = PatientAllergy(
         added_by_user_id=current_user.user_id,
         **data.model_dump()
@@ -44,7 +50,7 @@ def get_patient_allergies(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    require_patient_access(current_user, patient_id, "view_history", db)
+    require_patient_access(current_user, patient_id, VIEW_HISTORY, db)
     return db.query(PatientAllergy).filter(
         PatientAllergy.patient_id == patient_id
     ).all()
@@ -61,7 +67,7 @@ def delete_allergy(
     ).first()
     if not allergy:
         raise HTTPException(status_code=404, detail="Allergy not found")
-    require_patient_access(current_user, allergy.patient_id, "view_history", db)
+    require_patient_access(current_user, allergy.patient_id, MANAGE_MEDICATIONS, db)
     db.delete(allergy)
     db.commit()
     return None

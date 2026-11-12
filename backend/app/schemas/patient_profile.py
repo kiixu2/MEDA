@@ -16,7 +16,12 @@ class PatientProfileCreate(PatientProfileBase):
 
 class PatientProfileResponse(PatientProfileBase):
     patient_id: int
+    assigned_nurse_id: Optional[int] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+class NurseAssign(BaseModel):
+    """المريض يعيّن ممرضاً مسؤولاً عنه (هذا يمنح الممرض صلاحية الوصول)."""
+    nurse_user_id: int
