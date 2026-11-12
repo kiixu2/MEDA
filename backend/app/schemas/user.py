@@ -1,20 +1,20 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, date
 
 
 class UserBase(BaseModel):
-    full_name: str
-    username: str
+    full_name: str = Field(min_length=2, max_length=150)
+    username: str = Field(min_length=3, max_length=50)
     email: EmailStr
-    phone_number: str
+    phone_number: str = Field(min_length=5, max_length=30)
     date_of_birth: date
-    gender: str
+    gender: str = Field(max_length=20)
 
 
 class UserCreate(UserBase):
-    password: str
-    role: str = "Patient"  # المسموح: Patient, Caregiver, Doctor, Nurse, Admin
+    # 🛡️ لا يوجد role هنا: كل من يسجل من التطبيق يصبح Patient.
+    # الأطباء/الممرضين/الأدمن يُنشؤون عبر seed_db.py أو لوحة إدارة.
+    password: str = Field(min_length=8, max_length=128)
 
 
 class UserLogin(BaseModel):

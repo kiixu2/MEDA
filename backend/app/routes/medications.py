@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
 from app.models.medication import Medication
+from app.models.stock_transaction import MedicationStockTransaction
 from app.models.user import User
 from app.schemas.medication import (
     MedicationCreate, MedicationUpdate, MedicationResponse
@@ -101,7 +102,15 @@ def delete_medication(
         raise HTTPException(status_code=404, detail="Medication not found")
     
     require_patient_access(current_user, med.patient_id, "manage_medications", db)
-    
+
+    if db.query(MedicationStockTransaction).filter(
+        MedicationStockTransaction.medication_id == medication_id
+    ).first():
+        raise HTTPException(
+            status_code=409,
+            detail="Medication has stock history and cannot be deleted"
+        )
+
     db.delete(med)
     db.commit()
     return None

@@ -31,7 +31,11 @@ def create_doctor_profile(
 
 
 @router.get("", response_model=List[DoctorResponse])
-def get_all_doctors(db: Session = Depends(get_db)):
+def get_all_doctors(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # 🛡️ تتطلب تسجيل دخول (كانت مفتوحة للجميع)
     return db.query(Doctor).all()
 
 

@@ -42,7 +42,7 @@ htmlcov/
 .nox/
 .coverage
 .coverage.*
-.cachepip --version
+.cache
 nosetests.xml
 coverage.xml
 *.cover
@@ -222,3 +222,6 @@ __marimo__/
 *.sqlite
 *.sqlite3
 meda.db
+backend/meda.db
+backend/meda_backup.db
+.env
